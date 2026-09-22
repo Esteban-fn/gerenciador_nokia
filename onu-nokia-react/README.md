@@ -1,3 +1,361 @@
+# Gerenciador Nokia ONU
+
+Aplicacao web para ajudar o suporte tecnico a montar comandos de configuracao para ONUs Nokia. O usuario informa a posicao da ONU e os dados desejados, e o sistema gera o comando e o copia para a area de transferencia.
+
+> **Guia para aprender e evoluir o projeto:** consulte [GUIA-DE-APRENDIZADO.md](GUIA-DE-APRENDIZADO.md). O conteúdo original deste README foi mantido.
+
+> Este projeto e um frontend. Ele nao se conecta diretamente a uma OLT ou ONU: atualmente ele gera textos de comandos para que o tecnico possa cola-los em outra ferramenta.
+
+## 1. Explicacao simples
+
+Imagine o projeto como uma casa:
+
+- `src/main.jsx` abre a casa.
+- `src/App.jsx` e o corredor principal e decide qual tela sera mostrada.
+- `src/components/` contem os comodos, ou seja, as telas e partes visuais.
+- `src/services/` contem as receitas que montam os comandos Nokia.
+- `src/utils/` contem ferramentas pequenas, como validacoes e copia de texto.
+- `src/context/` guarda informacoes compartilhadas entre as telas.
+- `src/hooks/` contem comportamentos reutilizaveis, como alertas e atalhos.
+- `src/*.css` define as cores, tamanhos, espacamentos e responsividade.
+
+Quando voce clica em uma opcao do menu, o React troca o componente visivel sem recarregar a pagina inteira.
+
+## 2. Objetivo do sistema
+
+O sistema organiza tarefas comuns de atendimento e configuracao de ONUs Nokia, como:
+
+- pesquisar cliente;
+- provisionar cliente;
+- configurar Wi-Fi;
+- alterar VLAN e PPPoE;
+- alterar senha web;
+- configurar telefone;
+- gerar comandos de bridge;
+- conferir dados de uma caixa;
+- executar outras operacoes disponiveis no menu.
+
+As telas normalmente recebem a posicao da ONU (slot, porta PON e indice), validam os campos, geram um comando, copiam o resultado e exibem uma mensagem.
+
+## 3. Tecnologias usadas
+
+### React
+
+React e a biblioteca usada para construir a interface com pecas reutilizaveis. Essas pecas sao chamadas de componentes e ficam principalmente em arquivos `.jsx`.
+
+Exemplo:
+
+```jsx
+function Saudacao() {
+   return <h1>Ola!</h1>;
+}
+```
+
+### JavaScript e JSX
+
+JavaScript contem a logica do programa. JSX parece HTML, mas fica dentro do JavaScript e permite criar a tela.
+
+### Vite
+
+Vite e a ferramenta que inicia o servidor de desenvolvimento e prepara o projeto para publicacao. Ele oferece atualizacao quase imediata enquanto voce edita os arquivos.
+
+### CSS
+
+CSS controla a aparencia. O projeto usa `App.css`, `index.css` e alguns arquivos CSS especificos de componentes.
+
+### Bibliotecas
+
+- `react-icons`: icones do menu e da interface.
+- `sweetalert2`: janelas e mensagens de sucesso, erro e confirmacao.
+- `gh-pages`: publica a pasta final no GitHub Pages.
+
+## 4. Preparando o ambiente
+
+Voce precisa ter Node.js instalado. Depois, abra o terminal na pasta `onu-nokia-react`:
+
+```bash
+cd onu-nokia-react
+npm install
+npm run dev
+```
+
+Abra o endereco mostrado pelo terminal, normalmente:
+
+```text
+http://localhost:5173
+```
+
+Para parar o servidor, pressione `Ctrl+C`.
+
+### Comandos importantes
+
+```bash
+npm run dev       # inicia o desenvolvimento
+npm run build     # cria a versao final em dist/
+npm run preview   # visualiza a versao compilada
+npm run lint      # procura problemas de codigo
+```
+
+O `package.json` importante e o que fica dentro de `onu-nokia-react`. O `package.json` da pasta acima possui dependencias auxiliares do repositorio.
+
+## 5. Mapa dos arquivos
+
+| Caminho | Funcao |
+| --- | --- |
+| `src/main.jsx` | Ponto inicial da aplicacao |
+| `src/App.jsx` | Layout, menu e selecao da tela ativa |
+| `src/config/menuItems.js` | Lista de itens do menu lateral |
+| `src/context/AppContext.jsx` | Estado compartilhado, como posicao e tela atual |
+| `src/components/` | Telas e componentes visuais |
+| `src/services/` | Funcoes que montam comandos Nokia |
+| `src/utils/validation.js` | Validacoes, copia e listas reutilizaveis |
+| `src/hooks/` | Comportamentos reutilizaveis |
+| `src/App.css` | Estilos principais da aplicacao |
+| `src/index.css` | Estilos globais |
+| `vite.config.js` | Configuracao do Vite |
+| `package.json` | Scripts e bibliotecas |
+| `public/` | Arquivos publicos que nao passam pelo processamento do React |
+| `dist/` | Resultado do build; nao e o local normal de edicao |
+
+## 6. Como uma tela funciona
+
+Considere a tela de Wi-Fi:
+
+1. `ConfiguracaoWifi.jsx` desenha os campos e botoes.
+2. `useState` guarda o nome e a senha digitados.
+3. O componente recebe `posicaoData` com slot, PON e indice.
+4. `validation.js` verifica se os dados sao validos.
+5. `wifiService.js` monta o texto do comando.
+6. `copyToClipboard` copia o texto.
+7. `useSweetAlert.js` mostra o resultado para o usuario.
+
+O sistema nao executa o comando na OLT. Ele apenas prepara e copia o texto.
+
+## 7. Como alterar algo existente
+
+### Alterar um texto de botao
+
+Procure o texto dentro do componente, por exemplo em `src/components/ConfiguracaoWifi.jsx`, e altere somente o texto:
+
+```jsx
+ALTERAR APENAS NOME
+```
+
+### Alterar cores ou tamanho
+
+Procure a classe CSS usada pelo elemento em `App.css` ou no CSS do componente. Nao altere `dist/`: ele sera recriado pelo build.
+
+### Alterar um comando
+
+Abra o servico correspondente em `src/services/`. Os comandos usam template strings, com crases, para inserir valores:
+
+```js
+return `Comando com ${data.inputSlot} e ${data.inputIndex}`;
+```
+
+Tenha cuidado com aspas, ponto e virgula e com a ordem dos parametros. Uma pequena mudanca pode gerar um comando invalido para a rede.
+
+## 8. Como adicionar uma nova opcao
+
+Suponha que voce queira criar uma tela chamada `Reiniciar ONU`.
+
+### Passo 1: criar o servico
+
+Crie `src/services/reiniciarService.js`:
+
+```js
+export function gerarComandoReinicio(data) {
+   const { inputSlot, inputGpon, inputIndex } = data;
+
+   return `COMANDO-DE-REINICIO-${inputSlot}-${inputGpon}-${inputIndex};`;
+}
+```
+
+Substitua o texto pelo comando real validado pela equipe de rede.
+
+### Passo 2: criar a tela
+
+Crie `src/components/ReiniciarOnu.jsx`:
+
+```jsx
+import { gerarComandoReinicio } from '../services/reiniciarService';
+import { copyToClipboard } from '../utils/validation';
+
+function ReiniciarOnu({ posicaoData }) {
+   const handleReiniciar = async () => {
+      const comando = gerarComandoReinicio(posicaoData);
+      await copyToClipboard(comando);
+   };
+
+   return (
+      <section className="card">
+         <div className="card-header">
+            <h3>REINICIAR ONU</h3>
+         </div>
+         <button type="button" className="btn btn-primary" onClick={handleReiniciar}>
+            GERAR COMANDO
+         </button>
+      </section>
+   );
+}
+
+export default ReiniciarOnu;
+```
+
+### Passo 3: cadastrar no menu
+
+Em `src/config/menuItems.js`, importe um icone e adicione um item:
+
+```js
+import { FiRefreshCw } from 'react-icons/fi';
+
+// dentro de menuItems
+{ id: 'reiniciar', label: 'Reiniciar ONU', icon: FiRefreshCw },
+```
+
+### Passo 4: conectar a tela ao `App.jsx`
+
+Em `src/App.jsx`, importe o componente:
+
+```jsx
+import ReiniciarOnu from './components/ReiniciarOnu';
+```
+
+Depois, adicione o caso no `switch` de `renderActiveComponent`:
+
+```jsx
+case 'reiniciar':
+   return <ReiniciarOnu posicaoData={posicaoData} />;
+```
+
+Agora o `id` do menu e o `case` precisam ser iguais. Se um se chamar `reiniciar` e o outro `restart`, a opcao nao abrira.
+
+### Passo 5: testar
+
+```bash
+npm run lint
+npm run build
+```
+
+Depois, abra a tela no navegador e teste campos vazios, valores validos e o comando copiado.
+
+## 9. Conceitos de codigo para aprender
+
+### Componente
+
+Uma funcao que retorna uma parte da tela:
+
+```jsx
+function Titulo() {
+   return <h2>Minha tela</h2>;
+}
+```
+
+### Propriedade (`props`)
+
+E uma informacao enviada de um componente para outro:
+
+```jsx
+function Tela({ nome }) {
+   return <p>{nome}</p>;
+}
+```
+
+### Estado (`useState`)
+
+E uma informacao que pode mudar enquanto a pessoa usa a tela:
+
+```jsx
+const [nome, setNome] = useState('');
+```
+
+### Evento
+
+E uma acao do usuario, como clicar ou digitar:
+
+```jsx
+<button onClick={handleSalvar}>Salvar</button>
+```
+
+### Funcao
+
+E uma receita que recebe dados e devolve um resultado. Os arquivos em `services/` usam funcoes para montar comandos sem desenhar a tela.
+
+### Import e export
+
+Permitem reutilizar codigo entre arquivos:
+
+```js
+// arquivo origem
+export function somar(a, b) {
+   return a + b;
+}
+
+// outro arquivo
+import { somar } from './arquivo';
+```
+
+## 10. Fluxo recomendado para qualquer mudanca
+
+1. Descreva a mudanca em uma frase.
+2. Localize a tela em `src/components/`.
+3. Se houver comando, localize o servico em `src/services/`.
+4. Faça uma alteracao pequena.
+5. Salve e veja o resultado no navegador.
+6. Rode `npm run lint`.
+7. Rode `npm run build`.
+8. So depois publique ou compartilhe a mudanca.
+
+## 11. Problemas comuns
+
+### `npm run dev` nao funciona
+
+Confirme que o terminal esta em `onu-nokia-react` e execute `npm install`.
+
+### A nova opcao aparece no menu, mas nao abre
+
+Confira se o `id` em `menuItems.js` e o `case` em `App.jsx` sao exatamente iguais.
+
+### O estilo nao mudou
+
+Confira o nome da classe no JSX e no CSS. Verifique tambem se editou o arquivo em `src/`, e nao a pasta `dist/`.
+
+### O comando nao e copiado
+
+A copia depende da permissao do navegador e normalmente funciona em `localhost` ou em uma pagina HTTPS. Veja o console do navegador para detalhes.
+
+### O build falhou
+
+Leia a primeira mensagem de erro, corrija aquele ponto e rode o comando novamente. Geralmente o erro esta relacionado a import com nome errado, virgula faltando ou componente sem `export default`.
+
+## 12. Publicacao
+
+O projeto possui configuracao para GitHub Pages:
+
+```bash
+npm run build
+npm run deploy
+```
+
+Antes de publicar, teste localmente e confirme que os comandos gerados estao corretos. A pasta `dist/` e criada automaticamente pelo Vite.
+
+## 13. Roteiro de aprendizagem
+
+Uma ordem tranquila para aprender este projeto:
+
+1. HTML basico: elementos, formularios, botoes e atributos.
+2. CSS basico: classes, flexbox, grid, cores e responsividade.
+3. JavaScript: variaveis, funcoes, objetos, arrays e template strings.
+4. React: componentes, props, estado e eventos.
+5. Projeto: imports, servicos, hooks e contexto.
+6. Qualidade: validacao, lint, build e testes manuais.
+7. Git: commits pequenos, branches e diferenca entre seu fork e o repositorio original.
+
+O melhor exercicio inicial e copiar uma tela simples, trocar o titulo e adicionar um campo. Depois, crie uma opcao que gere um comando de teste. Assim voce aprende a tela e a logica separadamente.
+
+## 14. Regra de ouro
+
+Edite sempre dentro de `src/`, faça uma mudanca por vez e valide o resultado. Quando nao souber onde mexer, procure primeiro o texto que aparece na tela usando a busca do VS Code (`Ctrl+Shift+F`).
 # 🔮 Gerenciador Nokia ONU | Tech Cyberpunk# 🔮 Gerenciador Nokia ONU | Tech Cyberpunk
 
 <div align="center"><div align="center">
